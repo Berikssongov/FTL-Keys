@@ -1,0 +1,57 @@
+<form id="keyForm">
+    <figure class="image image_resized" style="width:20%;" data-ckbox-resource-id="Yq1Nd47KTK_v">
+        <picture>
+            <source srcset="https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/80.webp 80w,https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/160.webp 160w,https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/240.webp 240w,https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/320.webp 320w,https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/400.webp 400w,https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/480.webp 480w,https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/560.webp 560w,https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/640.webp 640w,https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/647.webp 647w" type="image/webp" sizes="(max-width: 647px) 100vw, 647px"><img src="https://ckbox.cloud/521d865fd0d7a72fb282/assets/Yq1Nd47KTK_v/images/647.png" width="391.435" height="186.4">
+        </picture>
+    </figure>
+    <p style="text-align:center;"><label for="keyName"><strong>Key Name:</strong></label><br><strong><input type="text" id="keyName" name="keyName"></strong><br><label for="signInOut"><strong>Signing In/Out:</strong></label><br><strong><select id="signInOut" name="signInOut">
+                <option value="Signing In">Signing In</option>
+                <option value="Signing Out">Signing Out</option>
+            </select></strong><br><label for="person"><strong>Person:</strong></label><br><strong><input type="text" id="person" name="person"></strong><br><label for="lockboxLocation"><strong>Lockbox Location:</strong></label><br><strong><select id="lockboxLocation" name="lockboxLocation">
+                <option value="Maintenance Box">Maintenance Box</option>
+                <option value="Operations Box">Operations Box</option>
+                <option value="Visitor Centre Box">Visitor Centre Box</option>
+                <option value="Artifacts Box">Artifacts Box</option>
+                <option value="Lost">*Lost*</option>
+                <option value="Other">Other</option>
+            </select></strong><br><strong><input style="display:none;" type="text" id="otherLocation" name="otherLocation" placeholder="Enter other location"></strong><br><strong><input type="button" value="Submit" onclick="submitForm()"></strong></p>
+</form>
+<script>
+function submitForm() {
+    var keyName = document.getElementById("keyName").value;
+    var signInOut = document.getElementById("signInOut").value;
+    var person = document.getElementById("person").value;
+    var lockboxLocation = document.getElementById("lockboxLocation").value;
+    var otherLocation = document.getElementById("otherLocation").value;
+    
+    // If the user selects "Other", use the value from the input field
+    if(lockboxLocation === "Other") {
+        lockboxLocation = otherLocation;
+    }
+    
+    console.log("Form Data:", {
+        keyName: keyName,
+        signInOut: signInOut,
+        person: person,
+        lockboxLocation: lockboxLocation
+    }); // Add this line to log the form data
+    
+    google.script.run.processForm({
+        keyName: keyName,
+        signInOut: signInOut,
+        person: person,
+        lockboxLocation: lockboxLocation
+    });
+    google.script.host.close();
+}
+
+// Show the input field for other location if "Other" is selected
+document.getElementById("lockboxLocation").addEventListener("change", function () {
+    var otherLocationInput = document.getElementById("otherLocation");
+    if(this.value === "Other") {
+        otherLocationInput.style.display = "block";
+    } else {
+        otherLocationInput.style.display = "none";
+    }
+});
+</script>
