@@ -13,6 +13,7 @@ Features
 Upcoming
 - Define Non-restricted keys and set rules
 - Set definition for lost keys
+- require name when filling out a form
 
 
 Current
