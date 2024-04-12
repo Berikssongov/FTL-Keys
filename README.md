@@ -13,3 +13,8 @@ Features
 Upcoming
 - Define Non-restricted keys and set rules
 - Set definition for lost keys
+
+
+Current
+- Non restricted keys arent getting the formObject information properly. So while the restricted key form is working properly (Which shows that processform function is working) the non restricted key form function is not working and may need to be rewritten.
+Last change was just troubleshooting where the info is getting lost, and how it's getting transfered currently
