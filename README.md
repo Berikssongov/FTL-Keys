@@ -17,7 +17,6 @@ Upcoming
 
 
 Current
-  Setting up signin logic for non restricted keys in the removekeyassignment function
-  The signout broke while doing this as well.
-
-  as far as I can tell the restricted keys are still fully functional.
+Redid the non restricted logic as it's own file in the program.
+Working on checking if the key is in the lockbox, and if not returning an error, but if so then transfering the first instance
+  I just implemented the debug page to better show all the steps live as the form is submitted
