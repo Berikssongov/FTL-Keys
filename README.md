@@ -7,16 +7,17 @@ Features
 - Define a restricted key and create rules on it's logic
   - (/^[A-F]\d{1,2}$/i test.name)
   - Can never have more than one instance in existance
- 
-
+ - Define Non-restricted keys and set rules
+ - Debug page for easier debugging
+- Working on checking if the key is in the lockbox, and if not returning an error, but if so then transfering the first instance ( Done)
 
 Upcoming
-- Define Non-restricted keys and set rules
 - Set definition for lost keys
 - require name when filling out a form
 
 
 Current
-Redid the non restricted logic as it's own file in the program.
-Working on checking if the key is in the lockbox, and if not returning an error, but if so then transfering the first instance
-  I just implemented the debug page to better show all the steps live as the form is submitted
+
+  -Sorting the 2 sheets successfully with restricted and non restricted keys
+
+  
