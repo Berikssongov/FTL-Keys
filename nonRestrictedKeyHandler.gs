@@ -118,7 +118,6 @@ function assignKey(keyName, person, lockboxLocation) {
     for (var i = 1; i < lockboxData.length; i++) {
         var currentKeyName = lockboxData[i][0].toString();
         var currentLocation = lockboxData[i][1].toString();
-        logToSheet("Comparing Key: " + currentKeyName + " at Location: " + currentLocation);
         if (currentKeyName === keyName && currentLocation === lockboxLocation) {
             // If the key is found in the lockbox at the specified location, remove it
             lockboxSheet.deleteRow(i + 1);
