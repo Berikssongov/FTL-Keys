@@ -29,8 +29,15 @@ function processForm(formObject) {
   Logger.log("Form Object: " + JSON.stringify(formObject)); // Log the form object to check if it's received properly
 
   if (!formObject || !formObject.keyName || !formObject.signInOut || !formObject.person || !formObject.lockboxLocation) {
+    logToSheet('Form data is missing.');
     Logger.log("Form data is missing or incomplete.");
     return "Form data is missing or incomplete."; // Return a message indicating missing or incomplete form data
+  }
+
+  // Check if the form data is complete
+  if (!formObject.keyName || !formObject.signInOut || !formObject.person || !formObject.lockboxLocation) {
+    logToSheet('Form data is incomplete.');
+    return "Form data is incomplete."; // Return a message indicating incomplete form data
   }
 
   var keyName = formObject.keyName;
@@ -49,15 +56,13 @@ function processForm(formObject) {
     Logger.log("Processing Restricted Key Form");
     processRestrictedKeyForm(formObject);
   } else {
-    // If the key is non-restricted, call the processNonRestrictedKeyForm function
+    // If the key is non-restricted, call the processNonRestrictedKeyForm function from NonRestrictedKeyHandler
     Logger.log("Processing Non-Restricted Key Form");
-    processNonRestrictedKeyForm(formObject);
+    var result = processNonRestrictedKeyForm(formObject);
+    Logger.log("Non-Restricted Key Form Result: " + result);
+    return result;
   }
 }
-
-
-
-
 
 // Logic for processing restricted keys
 function processRestrictedKeyForm(formObject) {
@@ -165,39 +170,6 @@ function processRestrictedKeyForm(formObject) {
     return "Form submitted successfully!";
   }
 }
-
-
-
-function processNonRestrictedKeyForm(formObject) {
-  Logger.log("Non-Restricted Key Form Object: " + JSON.stringify(formObject)); // Log the formObject for debugging
-
-  if (!formObject || !formObject.keyName || !formObject.signInOut || !formObject.person || !formObject.lockboxLocation) {
-    Logger.log("Non-Restricted Key Form data is missing or incomplete.");
-    return "Non-Restricted Key Form data is missing or incomplete."; // Return a message indicating missing or incomplete form data
-  }
-
-  Logger.log("Processing Non-Restricted Key Form...");
-
-  var keyName = formObject.keyName;
-  var signInOut = formObject.signInOut;
-  var person = formObject.person;
-  var lockboxLocation = formObject.lockboxLocation;
-
-  // Implement logic for processing non-restricted keys here
-  // Currently, this function doesn't have any specific logic implemented
-
-  // Log the received form data
-  Logger.log("Received form data - Key Name: " + keyName + ", Sign In/Out: " + signInOut + ", Person: " + person + ", Lockbox Location: " + lockboxLocation);
-
-  // Return a success message
-  return "Non-Restricted Key Form submitted successfully!";
-}
-
-
-
-
-
-
 
 function searchData() {
   var ui = SpreadsheetApp.getUi();
