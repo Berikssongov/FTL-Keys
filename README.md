@@ -15,9 +15,4 @@ Upcoming
 - Set definition for lost keys
 - require name when filling out a form
 
-
-Current
-
-  -Sorting the 2 sheets successfully with restricted and non restricted keys
-
   
