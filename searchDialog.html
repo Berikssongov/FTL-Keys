@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .result-section {
+      margin-bottom: 20px;
+      display: none;
+    }
+    .result-section h3 {
+      margin: 0;
+      margin-bottom: 5px;
+    }
+    .result-section ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    .result-section ul li {
+      background-color: #f9f9f9;
+      margin-bottom: 2px;
+      padding: 5px;
+      border: 1px solid #ddd;
+    }
+    .search-container {
+      margin-bottom: 20px;
+    }
+    .loading {
+      display: none;
+      margin-top: 20px;
+    }
+    .loader {
+      border: 16px solid #f3f3f3; /* Light grey */
+      border-top: 16px solid #3498db; /* Blue */
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      animation: spin 2s linear infinite;
+      margin: auto; /* Center loader */
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .toggle-button {
+      margin: 10px 0;
+      cursor: pointer;
+    }
+   
+    .searchable {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h2>Search Keys and People</h2>
+    <div class="search-container">
+      <input type="text" id="searchQuery" placeholder="Enter key or person's name" onkeypress="searchOnEnter(event)">
+      <button onclick="performSearch()">Search</button>
+    </div>
+    <div id="loading" class="loading">
+      <div class="loader"></div>
+    </div>
+    <div id="currentAssignee" class="result-section">
+      <h3>Assigned People</h3>
+      <ul id="currentAssigneeList"></ul>
+    </div>
+    <div id="currentKeys" class="result-section">
+      <h3>Current Keys</h3>
+      <ul id="currentKeyList"></ul>
+    </div>
+    <div id="lockboxKeys" class="result-section">
+      <h3>Keys in Lockboxes</h3>
+      <ul id="lockboxKeyList"></ul>
+    </div>
+    <div id="keyHistory" class="result-section">
+      <h3>History</h3>
+      <button id="historyToggle" class="toggle-button" onclick="toggleHistory()">Show History</button>
+      <ul id="keyHistoryList"></ul>
+    </div>
+    <div id="noResults" class="result-section" style="display: none;">
+      <h3>No results found. Please check the spelling of the name or key.</h3>
+    </div>
+  </div>
+  <script>
+    function logToSheet(logText) {
+      google.script.run.logToSheet('Client: ' + logText);
+    }
+
+    function searchOnEnter(event) {
+      if (event.key === 'Enter') {
+        performSearch();
+      }
+    }
+
+    function performSearch() {
+      var query = document.getElementById('searchQuery').value;
+      logToSheet('Performing search with query: ' + query);
+      document.getElementById('noResults').style.display = 'none'; // Hide "No results found" message
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('keyHistory').style.display = 'none';
+      document.getElementById('currentAssignee').style.display = 'none';
+      document.getElementById('currentKeys').style.display = 'none';
+      document.getElementById('lockboxKeys').style.display = 'none';
+      google.script.run.withSuccessHandler(displayResults).withFailureHandler(function(error) {
+        logToSheet('Error: ' + error.message);
+        document.getElementById('loading').style.display = 'none';
+      }).processSearch(query);
+    }
+
+    function displayResults(data) {
+      logToSheet('Displaying results: ' + JSON.stringify(data));
+      document.getElementById('loading').style.display = 'none';
+
+      if (data.keyHistory.length > 0) {
+        document.getElementById('keyHistory').style.display = 'block';
+        document.getElementById('keyHistoryList').innerHTML = data.keyHistory.map(item => `<li>${item}</li>`).join('');
+      } else {
+        document.getElementById('keyHistory').style.display = 'none';
+      }
+
+      if (data.currentAssignee.length > 0) {
+        document.getElementById('currentAssignee').style.display = 'block';
+        document.getElementById('currentAssigneeList').innerHTML = data.currentAssignee.map(item => `<li class="searchable" onclick="searchForItem('${item}')">${item}</li>`).join(''); // Added onclick event
+      } else {
+        document.getElementById('currentAssignee').style.display = 'none';
+      }
+
+      if (data.currentKeys.length > 0) {
+        document.getElementById('currentKeys').style.display = 'block';
+        document.getElementById('currentKeyList').innerHTML = data.currentKeys.map(item => `<li class="searchable" onclick="searchForItem('${item}')">${item}</li>`).join(''); // Added onclick event
+      } else {
+        document.getElementById('currentKeys').style.display = 'none';
+      }
+
+      if (data.lockboxKeys.length > 0) {
+        document.getElementById('lockboxKeys').style.display = 'block';
+        document.getElementById('lockboxKeyList').innerHTML = data.lockboxKeys.map(item => `<li>${item.name}: ${item.count}</li>`).join('');
+      } else {
+        document.getElementById('lockboxKeys').style.display = 'none';
+      }
+
+      // Hide the "No results found" message if there are results
+      var noResultsMessage = document.getElementById('noResults');
+      if (data.keyHistory.length > 0 || data.currentAssignee.length > 0 || data.currentKeys.length > 0 || data.lockboxKeys.length > 0) {
+        noResultsMessage.style.display = 'none';
+      } else {
+        noResultsMessage.style.display = 'block';
+      }
+    }
+
+    function searchForItem(item) {
+      document.getElementById('searchQuery').value = item;
+      performSearch();
+    }
+
+    function toggleHistory() {
+      var historyList = document.getElementById('keyHistoryList');
+      var historyToggle = document.getElementById('historyToggle');
+      if (historyList.style.display === 'none') {
+        historyList.style.display = 'block';
+        historyToggle.innerText = 'Hide History';
+      } else {
+        historyList.style.display = 'none';
+        historyToggle.innerText = 'Show History';
+      }
+    }
+  </script>
+</body>
+</html>
