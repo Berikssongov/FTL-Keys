@@ -1,22 +1,19 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
-  ui.createMenu('---->')
-      .addItem('Click Keys to make a change', 'fakeMenuItem')
-      .addToUi(); 
-  ui.createMenu('Keys')
-      .addItem('Add / Update Keys ', 'openFormDialog')
-       .addItem('Search', 'searchData')
-      
-      .addToUi();
-  ui.createMenu('<----')
-      .addItem('Click Keys to make a change', 'fakeMenuItem')
-      .addToUi();
+  ui.createMenu('🔑')
+    .addItem('Process Key Form ', 'openFormDialog')
+    .addItem('Search Keys', 'openSearchDialog')
+    .addToUi();
+  ui.createMenu('🔒')
+    .addItem('!!! Compile Restricted Keys Report !!!', 'compileReport')
+    .addToUi();
+    
 }
 
 function openFormDialog() {
   var html = HtmlService.createHtmlOutputFromFile('Form')
-      .setWidth(500)
-      .setHeight(600);
+      .setWidth(400)
+      .setHeight(625);
   SpreadsheetApp.getUi().showModalDialog(html, 'Enter Key Information');
 }
 
@@ -171,46 +168,170 @@ function processRestrictedKeyForm(formObject) {
   }
 }
 
-function searchData() {
-  var ui = SpreadsheetApp.getUi();
-  var searchQuery = ui.prompt('Search', 'Enter a key or person\'s name:', ui.ButtonSet.OK_CANCEL);
-  if (searchQuery.getSelectedButton() == ui.Button.OK) {
-    var result = searchForKeyOrPerson(searchQuery.getResponseText());
-    if (result && result.length > 0) {
-      var message = 'Search Results:\n\n' + result.join('\n');
-      ui.alert('Search Results', message, ui.ButtonSet.OK);
-    } else {
-      ui.alert('Search Results', 'No matching records found.', ui.ButtonSet.OK);
-    }
-  }
+function openSearchDialog() {
+  var html = HtmlService.createHtmlOutputFromFile('searchDialog')
+      .setWidth(500)
+      .setHeight(400);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Search Keys and People');
 }
 
 function searchForKeyOrPerson(query) {
+  logToSheet('searchForKeyOrPerson called with query: ' + query);
+  
   var logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Log");
   var data = logSheet.getDataRange().getValues();
-  var results = [];
-  
-  // Search for matches in the log data
+  var keyHistory = [];
+
   for (var i = 1; i < data.length; i++) {
-    if (data[i][1] === query || data[i][3] === query) {
-      var date = data[i][0].toLocaleDateString(); // Get the date in a readable format
-      var action = data[i][2] === "Signing In" ? "Signed In" : "Signed Out";
-      var keyName = data[i][1];
-      var fromTo = data[i][2] === "Signing In" ? "From" : "To";
-      var person = data[i][3];
-      var lockbox = data[i][4];
-      results.push([date, action, keyName, fromTo, person, lockbox]);
+    var keyName = data[i][1] ? data[i][1] : "";
+    var personName = data[i][3] ? data[i][3] : "";
+    var date = new Date(data[i][0]).toLocaleDateString();
+    var action = data[i][2] === "Signing In" ? "Signed In" : "Signed Out";
+    var fromTo = data[i][2] === "Signing In" ? "From" : "To";
+    var lockbox = data[i][4];
+    var logEntry = `${date} | ${action} | ${keyName} | ${fromTo} | ${personName} | ${lockbox}`;
+
+    if (keyName === query || personName === query) {
+      keyHistory.push(logEntry);
     }
   }
-  
-  // Format the results with spacing and lines between rows
-  var formattedResults = [];
-  results.forEach(function(row) {
-    formattedResults.push(row.join(' | ')); // Join each piece of data with a pipe symbol
-    formattedResults.push('-------------------------------------'); // Add a line between rows
-  });
 
-  return formattedResults;
+  var currentKeys = getCurrentKeys(query);
+  var currentAssignee = getCurrentAssignee(query);
+
+  logToSheet('search results: ' + JSON.stringify({
+    keyHistory: keyHistory,
+    currentKeys: currentKeys,
+    currentAssignee: currentAssignee
+  }));
+  
+  return {
+    keyHistory: keyHistory,
+    currentKeys: currentKeys,
+    currentAssignee: currentAssignee
+  };
+}
+
+function getCurrentKeys(person) {
+  logToSheet('getCurrentKeys called with person: ' + person);
+
+  var assignedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("FTL.Keys.Assigned");
+  
+  if (!assignedSheet) {
+    logToSheet('Error: FTL.Keys.Assigned sheet not found');
+    return ['Error: FTL.Keys.Assigned sheet not found'];
+  }
+  
+  var data = assignedSheet.getDataRange().getValues();
+  var currentKeys = [];
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][1] === person) {
+      var keyName = data[i][0] ? data[i][0] : "";
+      var lockbox = data[i][2] ? data[i][2] : "";
+      currentKeys.push(`${keyName} (${lockbox})`);
+    }
+  }
+
+  logToSheet('getCurrentKeys results: ' + JSON.stringify(currentKeys));
+
+  return currentKeys;
+}
+
+function getCurrentAssignee(key) {
+  logToSheet('getCurrentAssignee called with key: ' + key);
+
+  var assignedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("FTL.Keys.Assigned");
+  
+  if (!assignedSheet) {
+    logToSheet('Error: FTL.Keys.Assigned sheet not found');
+    return 'Error: FTL.Keys.Assigned sheet not found';
+  }
+  
+  var data = assignedSheet.getDataRange().getValues();
+  var assignee = 'Not Assigned';
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === key) {
+      assignee = data[i][1] ? data[i][1] : 'Not Assigned';
+      break;
+    }
+  }
+
+  logToSheet('getCurrentAssignee result: ' + assignee);
+
+  return assignee;
+}
+
+function processSearch(query) {
+  logToSheet('Server: Performing search with query: ' + query);
+
+  var logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Log");
+  var assignedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("FTL.Keys.Assigned");
+  var lockboxSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("FTL.Digital.Lockbox");
+
+  var logData = logSheet.getDataRange().getValues();
+  var assignedData = assignedSheet.getDataRange().getValues();
+  var lockboxData = lockboxSheet.getDataRange().getValues();
+
+  var keyHistory = [];
+  var currentAssignee = [];
+  var currentKeys = [];
+  var lockboxKeys = {};
+
+  // Search in the log for key history
+  for (var i = 1; i < logData.length; i++) {
+    if (logData[i][1] === query || logData[i][3] === query) {
+      var date = logData[i][0].toLocaleDateString();
+      var action = logData[i][2] === "Signing In" ? "Signed In" : "Signed Out";
+      var keyName = logData[i][1];
+      var fromTo = logData[i][2] === "Signing In" ? "From" : "To";
+      var person = logData[i][3];
+      var lockbox = logData[i][4];
+      keyHistory.push(`${date} | ${action} | ${keyName} | ${fromTo} | ${person} | ${lockbox}`);
+    }
+  }
+
+  // Search in the assigned sheet for current keys assigned to a person or the key itself
+  for (var i = 1; i < assignedData.length; i++) {
+    if (assignedData[i][1] === query) {
+      currentKeys.push(assignedData[i][0]);
+    }
+    if (assignedData[i][0] === query) {
+      currentAssignee.push(assignedData[i][1]);
+    }
+  }
+
+  // Search in the lockbox sheet for keys in lockboxes
+  for (var i = 1; i < lockboxData.length; i++) {
+    if (lockboxData[i][0] === query) {
+      if (!lockboxKeys[lockboxData[i][1]]) {
+        lockboxKeys[lockboxData[i][1]] = 0;
+      }
+      lockboxKeys[lockboxData[i][1]]++;
+    }
+  }
+
+  // Convert lockboxKeys object to array format
+  var lockboxKeysArray = Object.keys(lockboxKeys).map(key => ({
+    name: key,
+    count: lockboxKeys[key]
+  }));
+
+  return {
+    keyHistory: keyHistory,
+    currentAssignee: Array.from(new Set(currentAssignee)),
+    currentKeys: currentKeys,
+    lockboxKeys: lockboxKeysArray
+  };
+}
+
+
+// Function to log to a specific sheet in the spreadsheet
+function logToSheet(logText) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Debug");
+  var lastRow = sheet.getLastRow();
+  sheet.getRange(lastRow + 1, 1).setValue(logText);
 }
 
 function isKeyAssigned(keyName) {
@@ -241,7 +362,6 @@ function isKeyAssigned(keyName) {
   Logger.log("Key " + keyName + " is not assigned to anyone.");
   return null;
 }
-
 
 function isRestrictedKey(keyName) {
   // Check if the key is a restricted key (A-F followed by 1-99)
