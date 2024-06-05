@@ -159,6 +159,9 @@ function updateLog(keyName, signInOut, person, lockboxLocation) {
   var newRow = [timestamp, keyName, signInOut, person, lockboxLocation];
   sheet.appendRow(newRow);
 
+  // Sort all keys (restricted and non-restricted)
+  sortAllKeys();
+
   // Return a success message
   return { success: true, message: "Log updated successfully!" };
 }
@@ -169,6 +172,7 @@ function logToSheet(logText) {
   var lastRow = sheet.getLastRow();
   sheet.getRange(lastRow + 1, 1).setValue(logText);
 }
+
 
 // Function to sort all keys (restricted and non-restricted)
 function sortAllKeys() {
@@ -243,7 +247,3 @@ function extractParts(keyName) {
   // If no match, return empty values
   return { letter: '', number: parseInt(keyName) };
 }
-
-
-
-
