@@ -17,11 +17,6 @@ function openFormDialog() {
   SpreadsheetApp.getUi().showModalDialog(html, 'Enter Key Information');
 }
 
-function fakeMenuItem() {
-  // This function can be left blank since it's a fake menu item
-  // or you can add any desired functionality here
-}
-
 function processForm(formObject) {
   Logger.log("Form Object: " + JSON.stringify(formObject)); // Log the form object to check if it's received properly
 
@@ -171,7 +166,7 @@ function processRestrictedKeyForm(formObject) {
 function openSearchDialog() {
   var html = HtmlService.createHtmlOutputFromFile('searchDialog')
       .setWidth(500)
-      .setHeight(400);
+      .setHeight(600);
   SpreadsheetApp.getUi().showModalDialog(html, 'Search Keys and People');
 }
 
@@ -325,7 +320,6 @@ function processSearch(query) {
     lockboxKeys: lockboxKeysArray
   };
 }
-
 
 // Function to log to a specific sheet in the spreadsheet
 function logToSheet(logText) {
